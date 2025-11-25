@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return sendJSON(res, 200, {});
   }
 
-  if (req.method !== 'GET') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return sendJSON(res, 405, { error: 'Method not allowed' });
   }
 

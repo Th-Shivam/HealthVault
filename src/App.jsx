@@ -23,7 +23,7 @@ function App() {
           <Route path="upload-record" element={<UploadRecord />} />
           <Route path="share-record" element={<ShareRecord />} />
           <Route path="doctor-portal" element={<DoctorPortal />} />
-          <Route path="view-record" element={<ViewRecord />} />
+          <Route path="doctor/view" element={<ViewRecord />} />
         </Route>
       </Routes>
     </BrowserRouter>

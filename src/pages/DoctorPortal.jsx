@@ -89,7 +89,7 @@ const DoctorPortal = () => {
 
                 // Redirect to view-records
                 setTimeout(() => {
-                    navigate('/view-records');
+                    navigate('/doctor/view');
                 }, 1000);
             } catch (error) {
                 console.error('QR Verification error:', error);
