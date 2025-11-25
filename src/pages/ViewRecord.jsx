@@ -12,15 +12,20 @@ const ViewRecord = () => {
 
     useEffect(() => {
         const fetchRecords = async () => {
+            console.log('ViewRecord mounted, fetching records...');
             const token = localStorage.getItem('doctorToken');
+            console.log('Token found:', !!token);
 
             if (!token) {
+                console.warn('No token found, redirecting...');
                 toast.error('Access denied. Please verify your credentials.');
-                navigate('/doctor-portal');
+                setLoading(false); // Ensure loading is set to false
+                setTimeout(() => navigate('/doctor-portal'), 1000);
                 return;
             }
 
             try {
+                console.log('Fetching /api/get-records...');
                 const response = await fetch('/api/get-records', {
                     method: 'GET',
                     headers: {
@@ -28,7 +33,9 @@ const ViewRecord = () => {
                     }
                 });
 
+                console.log('Response status:', response.status);
                 const data = await response.json();
+                console.log('Response data:', data);
 
                 if (!response.ok) {
                     throw new Error(data.error || 'Failed to fetch records');
