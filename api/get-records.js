@@ -88,7 +88,9 @@ export default async function handler(req, res) {
 
     return sendJSON(res, 200, {
       success: true,
-      records: recordsWithSignedUrls
+      records: recordsWithSignedUrls,
+      grant_id: grant_id,
+      doctor_email: grant.doctor_email
     });
 
   } catch (error) {

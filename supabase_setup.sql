@@ -69,3 +69,29 @@ create policy "Users can create grants"
 create policy "Users can view their own grants"
   on grants for select
   using (auth.uid() = patient_id);
+
+-- 9. Create the 'access_logs' table
+create table if not exists access_logs (
+  id uuid default gen_random_uuid() primary key,
+  grant_id uuid references grants(id) not null,
+  doctor_id text, -- Optional identifier for the doctor
+  record_id uuid references records(id) not null,
+  accessed_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 10. Enable RLS on 'access_logs' table
+alter table access_logs enable row level security;
+
+-- 11. Create policies for 'access_logs' table
+drop policy if exists "Users can view logs for their records" on access_logs;
+
+-- Allow users to view logs for their records (via grants)
+create policy "Users can view logs for their records"
+  on access_logs for select
+  using (
+    exists (
+      select 1 from grants
+      where grants.id = access_logs.grant_id
+      and grants.patient_id = auth.uid()
+    )
+  );

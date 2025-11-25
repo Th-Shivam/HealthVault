@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabaseClient';
 
 const UploadRecord = () => {
     const [file, setFile] = useState(null);
@@ -8,7 +9,21 @@ const UploadRecord = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [dragActive, setDragActive] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [patientId, setPatientId] = useState(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setPatientId(user.id);
+            } else {
+                navigate('/login');
+            }
+        };
+        fetchUser();
+    }, [navigate]);
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -53,18 +68,68 @@ const UploadRecord = () => {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!file) return;
+        if (!file || !patientId) {
+            toast.error('Missing required information');
+            return;
+        }
 
-        // Placeholder for backend call
-        console.log('Uploading:', { file, title, description });
-        toast.success('File prepared for upload (Backend integration pending)');
-        // navigate('/dashboard'); // Optional: redirect after upload
+        setLoading(true);
+
+        try {
+            // Convert file to base64
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+
+            reader.onload = async () => {
+                try {
+                    const base64 = reader.result.split(',')[1]; // Remove the data:image/png;base64, prefix
+
+                    const response = await fetch('/api/upload-record', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            title,
+                            description,
+                            patient_id: patientId,
+                            file: base64,
+                            fileName: file.name,
+                            fileType: file.type
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Upload failed');
+                    }
+
+                    toast.success('Record uploaded successfully!');
+                    navigate('/dashboard');
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    toast.error(error.message || 'Failed to upload record');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            reader.onerror = () => {
+                toast.error('Failed to read file');
+                setLoading(false);
+            };
+        } catch (error) {
+            console.error('Error:', error);
+            toast.error('An error occurred');
+            setLoading(false);
+        }
     };
 
     return (
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto py-8">
             <div className="md:flex md:items-center md:justify-between mb-8">
                 <div className="min-w-0 flex-1">
                     <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
@@ -193,10 +258,10 @@ const UploadRecord = () => {
                         </button>
                         <button
                             type="submit"
-                            disabled={!file}
+                            disabled={!file || loading}
                             className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Upload Record
+                            {loading ? 'Uploading...' : 'Upload Record'}
                         </button>
                     </div>
                 </form>
