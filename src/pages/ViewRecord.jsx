@@ -109,6 +109,19 @@ const ViewRecord = () => {
         );
     }
 
+    const formatDate = (dateString) => {
+        try {
+            if (!dateString) return 'Unknown date';
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return 'Invalid date';
+        }
+    };
+
     return (
         <div className="max-w-7xl mx-auto space-y-6 py-8">
             {/* Header Section */}
@@ -144,11 +157,7 @@ const ViewRecord = () => {
                                 >
                                     <h4 className="text-sm font-medium text-gray-900">{record.title}</h4>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        {new Date(record.uploaded_at).toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric'
-                                        })}
+                                        {formatDate(record.uploaded_at)}
                                     </p>
                                     {record.description && (
                                         <p className="text-xs text-gray-600 mt-1 line-clamp-2">{record.description}</p>
@@ -169,11 +178,7 @@ const ViewRecord = () => {
                                     {selectedRecord.title}
                                 </h3>
                                 <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                                    Uploaded on {new Date(selectedRecord.uploaded_at).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
+                                    Uploaded on {formatDate(selectedRecord.uploaded_at)}
                                 </p>
                                 {selectedRecord.description && (
                                     <p className="mt-2 text-sm text-gray-700">
