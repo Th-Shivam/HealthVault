@@ -14,23 +14,10 @@ const ViewRecord = () => {
     const [selectedRecord, setSelectedRecord] = useState(null); // For modal
     const [viewingUrl, setViewingUrl] = useState(null); // Signed URL for viewing
 
-    // Helper: Get signed URL if needed
+    // Helper: Get signed URL - backend now provides this directly
     const getSignedUrl = async (record) => {
-        if (record.signed_url) return record.signed_url;
-        // If backend already returns signed url in file_url (which it does currently), use that
-        if (record.file_url && record.file_url.includes('token=')) return record.file_url;
-
-        // Fallback to helper endpoint
-        try {
-            const response = await fetch(`/api/signed-url?path=${encodeURIComponent(record.file_url)}`);
-            const data = await response.json();
-            if (data.success) return data.signed_url;
-            throw new Error('Failed to get signed URL');
-        } catch (err) {
-            console.error('Error getting signed URL:', err);
-            toast.error('Could not load file');
-            return null;
-        }
+        // Backend now always returns signed_url field
+        return record.signed_url || record.file_url;
     };
 
     // Fetch Records
@@ -52,7 +39,8 @@ const ViewRecord = () => {
             // Note: Backend supports POST now
             const data = await apiPost('/api/get-records', {});
 
-            console.debug('Fetch success:', data);
+            console.debug('API get-records response:', data);
+            console.debug('Records received:', data.records?.length || 0);
 
             if (data.success) {
                 setRecords(data.records || []);
@@ -293,7 +281,9 @@ const ViewRecord = () => {
                                     </button>
                                 </div>
                                 <div className="mt-2 h-[70vh] bg-gray-100 rounded flex items-center justify-center overflow-auto">
-                                    {selectedRecord.file_url.toLowerCase().endsWith('.pdf') || viewingUrl.toLowerCase().includes('.pdf') ? (
+                                    {(selectedRecord.signed_url?.toLowerCase().endsWith('.pdf') ||
+                                        selectedRecord.file_url?.toLowerCase().endsWith('.pdf') ||
+                                        viewingUrl?.toLowerCase().includes('.pdf')) ? (
                                         <iframe
                                             src={viewingUrl}
                                             className="w-full h-full border-0"
