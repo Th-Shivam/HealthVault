@@ -51,6 +51,7 @@ Built with privacy and security at its core, HealthVault uses end-to-end encrypt
 - ❌ **Revoke Access** - Instantly revoke doctor access at any time
 - 📊 **Access Logs** - View who accessed your records and when
 - 🗑️ **Delete Records** - Permanently remove records from the system
+- 📧 **Email Notifications** - Real-time alerts when records are accessed
 
 ### 👨‍⚕️ **Doctor Features**
 - 🔓 **Quick Access** - Verify via OTP or QR code scan
@@ -88,6 +89,7 @@ Built with privacy and security at its core, HealthVault uses end-to-end encrypt
   - File storage
   - Row-Level Security (RLS)
 - **JWT** - JSON Web Tokens for doctor sessions
+- **SendGrid** - Email notifications
 
 ### **DevOps**
 - **Vercel** - Hosting & CI/CD
@@ -200,6 +202,9 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 # Backend (Serverless functions)
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Email Notifications (SendGrid)
+SENDGRID_API_KEY=your_sendgrid_api_key_here
 ```
 
 4. **Set up Supabase database**
@@ -243,6 +248,18 @@ http://localhost:3000
 2. Create a new bucket named `medical-records`
 3. Set it to **Public** (for now) or configure RLS policies
 4. Note: For production, use private buckets with signed URLs
+
+### **SendGrid Configuration** (Optional but Recommended)
+
+1. Create a free account at [sendgrid.com](https://sendgrid.com/free)
+2. Verify your sender email address
+3. Navigate to **Settings** → **API Keys**
+4. Create a new API key with **Full Access** permissions
+5. Copy the API key to your `.env` file as `SENDGRID_API_KEY`
+6. **Important:** Replace `noreply@healthvault.app` in `api/services/email-service.js` with your verified sender email
+
+**Note:** Without SendGrid configured, the app will work perfectly but email notifications will be skipped.
+
 
 ---
 
