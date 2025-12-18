@@ -10,32 +10,34 @@ const AuthCallback = () => {
     useEffect(() => {
         const handleAuthCallback = async () => {
             try {
-                // Get the URL hash parameters
+                // Check for auth code/tokens in URL (both query params and hash)
+                const urlParams = new URLSearchParams(window.location.search);
                 const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                const access_token = hashParams.get('access_token');
-                const refresh_token = hashParams.get('refresh_token');
-                const type = hashParams.get('type');
 
-                if (access_token && refresh_token) {
-                    // Set the session using the tokens
-                    const { data, error } = await supabase.auth.setSession({
-                        access_token,
-                        refresh_token,
-                    });
+                // Check for error in URL
+                const error_code = urlParams.get('error_code') || hashParams.get('error_code');
+                const error_description = urlParams.get('error_description') || hashParams.get('error_description');
 
-                    if (error) throw error;
+                if (error_code) {
+                    throw new Error(error_description || 'Verification failed');
+                }
 
-                    if (data.session) {
-                        toast.success('Email verified successfully! Welcome to HealthVault.');
-                        navigate('/dashboard');
-                    } else {
-                        throw new Error('Failed to establish session');
-                    }
-                } else if (type === 'recovery') {
-                    // Handle password recovery if needed
-                    navigate('/reset-password');
+                // Try to get session - Supabase automatically handles the callback
+                const { data: { session }, error } = await supabase.auth.getSession();
+
+                if (error) throw error;
+
+                if (session) {
+                    toast.success('Email verified successfully! Welcome to HealthVault.');
+                    navigate('/dashboard');
                 } else {
-                    throw new Error('Invalid verification link');
+                    // If no session, check if there's a recovery type
+                    const type = urlParams.get('type') || hashParams.get('type');
+                    if (type === 'recovery') {
+                        navigate('/reset-password');
+                    } else {
+                        throw new Error('Verification link is invalid or has expired');
+                    }
                 }
             } catch (error) {
                 console.error('Auth callback error:', error);
