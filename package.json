@@ -13,12 +13,12 @@
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
     "@supabase/supabase-js": "^2.84.0",
+    "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
     "react-qr-code": "^2.0.18",
-    "react-qr-reader": "^3.0.0-beta-1",
     "react-router-dom": "^7.9.6"
   },
   "devDependencies": {

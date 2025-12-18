@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { QrReader } from 'react-qr-reader';
+import { Html5Qrcode } from 'html5-qrcode';
 import toast from 'react-hot-toast';
 
 const DoctorPortal = () => {
@@ -9,7 +9,68 @@ const DoctorPortal = () => {
     const [doctorEmail, setDoctorEmail] = useState('');
     const [scanResult, setScanResult] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
     const navigate = useNavigate();
+    const html5QrCodeRef = useRef(null);
+    const scannerElementId = 'qr-reader';
+
+    // Initialize QR Scanner
+    useEffect(() => {
+        if (activeTab === 'qr' && !isScanning) {
+            startScanner();
+        }
+
+        return () => {
+            stopScanner();
+        };
+    }, [activeTab]);
+
+    const startScanner = async () => {
+        if (html5QrCodeRef.current || isScanning) return;
+
+        try {
+            const html5QrCode = new Html5Qrcode(scannerElementId);
+            html5QrCodeRef.current = html5QrCode;
+
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            };
+
+            await html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onScanSuccess,
+                onScanError
+            );
+            setIsScanning(true);
+        } catch (err) {
+            console.error('Failed to start scanner:', err);
+            toast.error('Failed to access camera. Please check permissions.');
+        }
+    };
+
+    const stopScanner = async () => {
+        if (html5QrCodeRef.current && isScanning) {
+            try {
+                await html5QrCodeRef.current.stop();
+                html5QrCodeRef.current.clear();
+                html5QrCodeRef.current = null;
+                setIsScanning(false);
+            } catch (err) {
+                console.error('Error stopping scanner:', err);
+            }
+        }
+    };
+
+    const onScanSuccess = (decodedText) => {
+        if (scanResult) return; // Prevent multiple scans
+        handleQrVerification(decodedText);
+    };
+
+    const onScanError = (errorMessage) => {
+        // Normal scanning errors, can be ignored
+    };
 
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
@@ -58,49 +119,46 @@ const DoctorPortal = () => {
         }
     };
 
-    const handleScan = async (result, error) => {
-        if (result) {
-            const qr_token = result?.text;
-            setScanResult(qr_token);
-            toast.success('QR Code scanned! Verifying...');
+    const handleQrVerification = async (qr_token) => {
+        setScanResult(qr_token);
+        toast.success('QR Code scanned! Verifying...');
+        stopScanner();
 
-            setLoading(true);
+        setLoading(true);
 
-            try {
-                const response = await fetch('/api/verify-qr', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        qr_token: qr_token
-                    })
-                });
+        try {
+            const response = await fetch('/api/verify-qr', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    qr_token: qr_token
+                })
+            });
 
-                const data = await response.json();
+            const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Invalid QR code');
-                }
-
-                // Save token to localStorage
-                localStorage.setItem('doctorToken', data.token);
-                toast.success('Access Granted! Redirecting to records...');
-
-                // Redirect to view-records
-                setTimeout(() => {
-                    navigate('/doctor/view');
-                }, 1000);
-            } catch (error) {
-                console.error('QR Verification error:', error);
-                toast.error(error.message || 'Failed to verify QR code');
-                setScanResult(null); // Reset to allow scanning again
-            } finally {
-                setLoading(false);
+            if (!response.ok) {
+                throw new Error(data.error || 'Invalid QR code');
             }
-        }
-        if (error) {
-            // console.info(error);
+
+            // Save token to localStorage
+            localStorage.setItem('doctorToken', data.token);
+            toast.success('Access Granted! Redirecting to records...');
+
+            // Redirect to view-records
+            setTimeout(() => {
+                navigate('/doctor/view');
+            }, 1000);
+        } catch (error) {
+            console.error('QR Verification error:', error);
+            toast.error(error.message || 'Failed to verify QR code');
+            setScanResult(null);
+            // Restart scanner
+            setTimeout(() => startScanner(), 1000);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -184,18 +242,11 @@ const DoctorPortal = () => {
                     ) : (
                         <div className="w-full max-w-sm text-center">
                             {!scanResult ? (
-                                <div className="relative overflow-hidden rounded-lg bg-black aspect-square">
-                                    <QrReader
-                                        onResult={handleScan}
-                                        constraints={{ facingMode: 'environment' }}
-                                        className="w-full h-full"
-                                        videoContainerStyle={{ paddingTop: '100%' }}
-                                        videoStyle={{ objectFit: 'cover' }}
-                                    />
-                                    <div className="absolute inset-0 border-2 border-indigo-500 opacity-50 pointer-events-none"></div>
-                                    <div className="absolute bottom-4 left-0 right-0 text-white text-xs bg-black/50 py-1">
-                                        Align QR code within the frame
-                                    </div>
+                                <div className="space-y-4">
+                                    <div id={scannerElementId} className="relative overflow-hidden rounded-lg bg-gray-900" style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}></div>
+                                    <p className="text-sm text-gray-500">
+                                        📷 Position the QR code within the camera view
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
