@@ -90,6 +90,20 @@ Add these variables:
 
 ---
 
+## 🔧 Email Verification Configuration
+
+### Auth Callback Route
+
+The app includes an `/auth/callback` route that handles email verification:
+- Extracts tokens from URL hash parameters
+- Establishes user session automatically
+- Redirects to dashboard on success
+- Shows error and redirects to login on failure
+
+**Important:** Make sure your Supabase redirect URLs include the `/auth/callback` path.
+
+---
+
 ## 🧪 Testing After Deployment
 
 1. **Signup Flow:**

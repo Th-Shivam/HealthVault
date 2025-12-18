@@ -9,6 +9,7 @@ import UploadRecord from './pages/UploadRecord';
 import ShareRecord from './pages/ShareRecord';
 import DoctorPortal from './pages/DoctorPortal';
 import ViewRecord from './pages/ViewRecord';
+import AuthCallback from './pages/AuthCallback';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="signup" element={<SignupPage />} />
+          <Route path="auth/callback" element={<AuthCallback />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="upload-record" element={<UploadRecord />} />
           <Route path="share-record" element={<ShareRecord />} />
